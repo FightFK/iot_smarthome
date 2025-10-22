@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev:web": "next dev",
-    "dev:mqtt": "tsx --env-file=.env.local src/app/mqtt/mqttworker.ts",
+    "dev:mqtt": "tsx --env-file=.env.local src/mqtt/mqttworker.ts",
     "dev:all": "concurrently \"yarn dev:web\" \"yarn dev:mqtt\"",
     "build": "next build",
     "start": "next start"
