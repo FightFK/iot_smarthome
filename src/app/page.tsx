@@ -12,6 +12,14 @@ import { DeleteRoomDialog } from "./components/DeleteRoomDialog";
 import { HistoryChart } from "./components/HistoryChart";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
+import {
+  getRooms,
+  addRoom,
+  updateRoom,
+  deleteRoom,
+} from "@/services/roomService";
+import { getRoomTempHumidity } from "@/services/tempHumidityService";
+import { getRoomMotion } from "@/services/motionService";
 
 type HistoryPoint = {
   timestamp: string;
@@ -34,7 +42,9 @@ const generateHistoricalData = (
         hour: "2-digit",
         minute: "2-digit",
       }),
-      temperature: parseFloat((baseTemp + (Math.random() - 0.5) * 3).toFixed(1)),
+      temperature: parseFloat(
+        (baseTemp + (Math.random() - 0.5) * 3).toFixed(1)
+      ),
       humidity: Math.round(baseHumidity + (Math.random() - 0.5) * 10),
       motion: Math.random() > 0.7 ? 1 : 0,
     });
@@ -64,9 +74,9 @@ export default function Page() {
     "dashboard"
   );
   const [isConnected] = useState(true);
-  const [historyFilter, setHistoryFilter] = useState<"today" | "week" | "month">(
-    "today"
-  );
+  const [historyFilter, setHistoryFilter] = useState<
+    "today" | "week" | "month"
+  >("today");
   const [addRoomDialogOpen, setAddRoomDialogOpen] = useState(false);
   const [editRoomDialogOpen, setEditRoomDialogOpen] = useState(false);
   const [deleteRoomDialogOpen, setDeleteRoomDialogOpen] = useState(false);
@@ -80,53 +90,106 @@ export default function Page() {
     setSnackOpen(true);
   };
 
-  const [rooms, setRooms] = useState<Room[]>([
-    {
-      id: 1,
-      name: "Room 1",
-      temperature: 24.5,
-      humidity: 55,
-      motionDetected: true,
-      lightOn: true,
-      lastUpdate: new Date().toLocaleTimeString(),
-      historyData: generateHistoricalData(24.5, 55),
-    },
-    {
-      id: 2,
-      name: "Room 2",
-      temperature: 26.2,
-      humidity: 62,
-      motionDetected: false,
-      lightOn: false,
-      lastUpdate: new Date().toLocaleTimeString(),
-      historyData: generateHistoricalData(26.2, 62),
-    },
-  ]);
+  const [rooms, setRooms] = useState<Room[]>([]);
 
-  const [recentMotions] = useState<MotionEvent[]>([
-    { id: 1, roomName: "Room 1", timestamp: "2 minutes ago" },
-    { id: 2, roomName: "Room 1", timestamp: "15 minutes ago" },
-    { id: 3, roomName: "Room 2", timestamp: "1 hour ago" },
-  ]);
+  const [recentMotions, setRecentMotions] = useState<MotionEvent[]>([]);
 
   useEffect(() => {
-    const t = setInterval(() => {
-      setRooms((prev) =>
-        prev.map((room) => ({
-          ...room,
-          temperature: parseFloat(
-            (room.temperature + (Math.random() - 0.5) * 0.5).toFixed(1)
-          ),
-          humidity: Math.max(
-            0,
-            Math.min(100, room.humidity + Math.round((Math.random() - 0.5) * 2))
-          ),
-          motionDetected: Math.random() > 0.85,
-          lastUpdate: new Date().toLocaleTimeString(),
-        }))
-      );
-    }, 5000);
-    return () => clearInterval(t);
+    const fetchRooms = async () => {
+      try {
+        const data = await getRooms(); // [{ room_id, room_name }, ...]
+
+        const roomsWithData = await Promise.all(
+          data.map(async (r: any) => {
+            try {
+              // ✅ ดึงข้อมูล temp/humidity (array)
+              const tempHumData = await getRoomTempHumidity(r.room_id);
+              const latestTempHum =
+                Array.isArray(tempHumData) && tempHumData.length > 0
+                  ? tempHumData[0]
+                  : null;
+
+              // ✅ ดึงข้อมูล motion (array)
+              const motionData = await getRoomMotion(r.room_id);
+              const latestMotion =
+                Array.isArray(motionData) && motionData.length > 0
+                  ? motionData[0]
+                  : null;
+
+              // สร้าง history data รวม temp, humidity, motion
+              const historyData = (tempHumData || [])
+                .sort(
+                  (a: any, b: any) =>
+                    new Date(a.timestamp).getTime() -
+                    new Date(b.timestamp).getTime()
+                )
+                .map((t: any) => ({
+                  timestamp: new Date(t.timestamp).toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
+                  temperature: t.temp,
+                  humidity: t.humidity,
+                  motion: motionData?.some(
+                    (m: any) =>
+                      Math.abs(
+                        new Date(m.time_motion).getTime() -
+                          new Date(t.timestamp).getTime()
+                      ) <
+                      60 * 1000 // มี motion ภายใน 1 นาทีเดียวกัน
+                  )
+                    ? 1
+                    : 0,
+                }));
+
+              return {
+                id: r.room_id,
+                name: r.room_name,
+                temperature: latestTempHum?.temp || 0,
+                humidity: latestTempHum?.humidity || 0,
+                motionDetected: !!latestMotion, // ถ้ามี motion record ล่าสุด
+                lightOn: false,
+                lastUpdate: latestTempHum?.timestamp
+                  ? new Date(latestTempHum.timestamp).toLocaleTimeString()
+                  : new Date().toLocaleTimeString(),
+                historyData,
+              };
+            } catch (err) {
+              console.warn(
+                `⚠️ Failed to fetch data for room ${r.room_id}:`,
+                err
+              );
+              return {
+                id: r.room_id,
+                name: r.room_name,
+                temperature: 0,
+                humidity: 0,
+                motionDetected: false,
+                lightOn: false,
+                lastUpdate: new Date().toLocaleTimeString(),
+                historyData: [],
+              };
+            }
+          })
+        );
+
+        setRooms(roomsWithData);
+
+        // ✅ รวม motion ล่าสุดของทุกห้อง สำหรับ MotionAlertCard
+        const allMotions = roomsWithData.flatMap((r) => ({
+          id: r.id,
+          roomName: r.name,
+          timestamp: r.lastUpdate,
+        }));
+        setRecentMotions(allMotions);
+      } catch (error) {
+        console.error("❌ Failed to fetch rooms:", error);
+      }
+    };
+
+    fetchRooms();
+    const interval = setInterval(fetchRooms, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const avgTemperature =
@@ -141,22 +204,27 @@ export default function Page() {
   const lastMotionRoom = rooms.find((r) => r.motionDetected);
   const lastMotion = lastMotionRoom ? lastMotionRoom.name : "None";
 
-  const handleAddRoom = (roomName: string) => {
-    const baseTemp = 22 + Math.random() * 6;
-    const baseHumidity = 45 + Math.random() * 30;
-    const newRoom: Room = {
-      id: nextRoomId,
-      name: roomName,
-      temperature: parseFloat(baseTemp.toFixed(1)),
-      humidity: Math.round(baseHumidity),
-      motionDetected: false,
-      lightOn: false,
-      lastUpdate: new Date().toLocaleTimeString(),
-      historyData: generateHistoricalData(baseTemp, baseHumidity),
-    };
-    setRooms((prev) => [...prev, newRoom]);
-    setNextRoomId((p) => p + 1);
-    openSnack(`${roomName} added successfully`);
+  const handleAddRoom = async (roomName: string) => {
+    try {
+      await addRoom(roomName);
+      openSnack(`${roomName} added successfully`);
+      // อัปเดต state จาก backend อีกที
+      const data = await getRooms();
+      setRooms(
+        data.map((r: any) => ({
+          id: r.room_id,
+          name: r.room_name,
+          temperature: 0,
+          humidity: 0,
+          motionDetected: false,
+          lightOn: false,
+          lastUpdate: new Date().toLocaleTimeString(),
+          historyData: [],
+        }))
+      );
+    } catch (error) {
+      openSnack("Failed to add room");
+    }
   };
 
   const handleEditRoom = (roomId: number) => {
@@ -164,13 +232,20 @@ export default function Page() {
     setEditRoomDialogOpen(true);
   };
 
-  const handleSaveEditRoom = (newName: string) => {
+  const handleSaveEditRoom = async (newName: string) => {
     if (selectedRoomId !== null) {
       const oldName = rooms.find((r) => r.id === selectedRoomId)?.name;
-      setRooms((prev) =>
-        prev.map((r) => (r.id === selectedRoomId ? { ...r, name: newName } : r))
-      );
-      openSnack(`Room renamed from "${oldName}" to "${newName}"`);
+      try {
+        await updateRoom(selectedRoomId, newName);
+        setRooms((prev) =>
+          prev.map((r) =>
+            r.id === selectedRoomId ? { ...r, name: newName } : r
+          )
+        );
+        openSnack(`Room renamed from "${oldName}" to "${newName}"`);
+      } catch (error) {
+        openSnack("Failed to rename room");
+      }
     }
   };
 
@@ -179,12 +254,17 @@ export default function Page() {
     setDeleteRoomDialogOpen(true);
   };
 
-  const handleConfirmDeleteRoom = () => {
+  const handleConfirmDeleteRoom = async () => {
     if (selectedRoomId !== null) {
       const room = rooms.find((r) => r.id === selectedRoomId);
       if (room) {
-        setRooms((prev) => prev.filter((r) => r.id !== selectedRoomId));
-        openSnack(`${room.name} removed from dashboard`);
+        try {
+          await deleteRoom(selectedRoomId);
+          setRooms((prev) => prev.filter((r) => r.id !== selectedRoomId));
+          openSnack(`${room.name} removed from dashboard`);
+        } catch (error) {
+          openSnack("Failed to delete room");
+        }
       }
     }
   };

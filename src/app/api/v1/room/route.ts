@@ -15,7 +15,7 @@ export async function GET() {
         }
 
         return NextResponse.json(
-            { message: "Success", data: Room },
+            { data: Room },
             { status: 200 }
         );
     } catch (err) {

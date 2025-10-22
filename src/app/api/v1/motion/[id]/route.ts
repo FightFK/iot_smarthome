@@ -1,35 +1,33 @@
 import { NextResponse } from "next/server";
 import { supabaseClient } from "@/libs/supabaseClient";
 
-interface Params {
-  params: {
-    id: string; // รับค่าพารามิเตอร์จาก URL
-  };
-}
-
-export async function GET(request: Request, { params }: Params) {
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const timeParam = decodeURIComponent(params.id);
-    const { data: Motion, error } = await supabaseClient
+    const { id } = await params;
+    console.log(id);
+    const { data: motionData, error } = await supabaseClient
       .from("Motion")
       .select("*")
-      .eq("time_motion", timeParam) // ใช้ชื่อคอลัมน์จริง
-      .single(); // ใช้ .single() เพื่อให้ได้เพียงแถวเดียว;
+      .eq("room_id", Number(id))
+      .order("time_motion", { ascending: false });
 
     if (error) {
       return NextResponse.json(
-        { message: "Error fetching rooms", error: error.message },
+        { message: "Error fetching motion data", error: error.message },
         { status: 500 }
       );
     }
 
     return NextResponse.json(
-      { message: "Success", data: Motion },
+      motionData,
       { status: 200 }
     );
-  } catch (err) {
+  } catch (err: any) {
     return NextResponse.json(
-      { message: "Server error", error: err },
+      { message: "Server error", error: err.message },
       { status: 500 }
     );
   }

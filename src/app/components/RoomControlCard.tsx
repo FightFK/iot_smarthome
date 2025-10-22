@@ -42,7 +42,8 @@ export function RoomControlCard({
 }) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
-  const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget);
+  const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) =>
+    setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
 
   return (
@@ -52,12 +53,15 @@ export function RoomControlCard({
         borderRadius: "calc(var(--radius) + 4px)",
         border: "1px solid var(--border)",
         bgcolor: "var(--card)",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <CardContent sx={{ p: 0 }}>
+      <CardContent sx={{ p: 0, flex: "1 1 auto" }}>
         {/* Header */}
         <Box
-          className="flex items-center justify-between"
+          className="flex items-center justify-between flex-wrap gap-2"
           sx={{
             px: 2,
             py: 1.5,
@@ -78,9 +82,18 @@ export function RoomControlCard({
                 border: "1px solid var(--border)",
               }}
             >
-              <LightbulbRoundedIcon sx={{ color: "var(--foreground)" }} fontSize="small" />
+              <LightbulbRoundedIcon
+                sx={{ color: "var(--foreground)" }}
+                fontSize="small"
+              />
             </Box>
-            <Typography sx={{ fontWeight: 600, color: "var(--foreground)" }}>
+            <Typography
+              sx={{
+                fontWeight: 600,
+                color: "var(--foreground)",
+                fontSize: { xs: 14, sm: 16 },
+              }}
+            >
               {roomName}
             </Typography>
           </Box>
@@ -96,10 +109,11 @@ export function RoomControlCard({
                   : "var(--accent)",
                 color: "var(--foreground)",
                 height: 22,
+                fontSize: { xs: 11, sm: 12 },
               }}
             />
             <IconButton size="small" onClick={handleMenuOpen}>
-              <MoreVertRoundedIcon />
+              <MoreVertRoundedIcon fontSize="small" />
             </IconButton>
             <Menu
               anchorEl={anchorEl}
@@ -132,23 +146,38 @@ export function RoomControlCard({
         </Box>
 
         {/* Body */}
-        <Box className="p-3 grid grid-cols-2 gap-3 text-sm">
+        <Box
+          className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm"
+          sx={{ flex: "1 1 auto" }}
+        >
           {/* Temperature */}
           <Box
             sx={{
               border: "1px solid var(--border)",
               bgcolor: "var(--popover)",
               borderRadius: "var(--radius)",
-              p: 3,
+              p: { xs: 2, sm: 3 },
             }}
           >
             <Box className="flex items-center gap-1.5 mb-1">
-              <ThermostatIcon sx={{ color: "var(--foreground)" }} fontSize="small" />
-              <Typography variant="caption" sx={{ color: "var(--muted-foreground)" }}>
+              <ThermostatIcon
+                sx={{ color: "var(--foreground)" }}
+                fontSize="small"
+              />
+              <Typography
+                variant="caption"
+                sx={{ color: "var(--muted-foreground)" }}
+              >
                 Temperature
               </Typography>
             </Box>
-            <Typography sx={{ fontWeight: 700, fontSize: 22, color: "var(--foreground)" }}>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: { xs: 18, sm: 22 },
+                color: "var(--foreground)",
+              }}
+            >
               {temperature.toFixed(1)}°C
             </Typography>
           </Box>
@@ -159,47 +188,75 @@ export function RoomControlCard({
               border: "1px solid var(--border)",
               bgcolor: "var(--popover)",
               borderRadius: "var(--radius)",
-              p: 3,
+              p: { xs: 2, sm: 3 },
             }}
           >
             <Box className="flex items-center gap-1.5 mb-1">
-              <OpacityIcon sx={{ color: "var(--foreground)" }} fontSize="small" />
-              <Typography variant="caption" sx={{ color: "var(--muted-foreground)" }}>
+              <OpacityIcon
+                sx={{ color: "var(--foreground)" }}
+                fontSize="small"
+              />
+              <Typography
+                variant="caption"
+                sx={{ color: "var(--muted-foreground)" }}
+              >
                 Humidity
               </Typography>
             </Box>
-            <Typography sx={{ fontWeight: 700, fontSize: 22, color: "var(--foreground)" }}>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: { xs: 18, sm: 22 },
+                color: "var(--foreground)",
+              }}
+            >
               {humidity}%
             </Typography>
           </Box>
 
           {/* Motion */}
           <Box
-            className="col-span-2"
+            className="col-span-1 sm:col-span-2"
             sx={{
               border: "1px solid var(--border)",
               bgcolor: "var(--popover)",
               borderRadius: "var(--radius)",
-              p: 3,
+              p: { xs: 2, sm: 3 },
             }}
           >
             <Box className="flex items-center gap-1.5">
-              <TimelineRoundedIcon sx={{ color: "var(--muted-foreground)" }} fontSize="small" />
-              <Typography variant="caption" sx={{ color: "var(--muted-foreground)" }}>
+              <TimelineRoundedIcon
+                sx={{ color: "var(--muted-foreground)" }}
+                fontSize="small"
+              />
+              <Typography
+                variant="caption"
+                sx={{ color: "var(--muted-foreground)" }}
+              >
                 Motion Status
               </Typography>
             </Box>
-            <Typography sx={{ mt: 0.5, fontWeight: 600, color: "var(--foreground)" }}>
+            <Typography
+              sx={{
+                mt: 0.5,
+                fontWeight: 600,
+                color: "var(--foreground)",
+                fontSize: { xs: 14, sm: 16 },
+              }}
+            >
               {motionDetected ? "Motion Detected" : "No Motion"}
             </Typography>
           </Box>
 
           {/* Controls */}
-          <Box className="col-span-2">
-            <Typography variant="body2" sx={{ mb: 1 }}>
+          <Box className="col-span-1 sm:col-span-2">
+            <Typography
+              variant="body2"
+              sx={{ mb: 1, fontSize: { xs: 13, sm: 14 } }}
+            >
               Light Control
             </Typography>
-            <Box className="flex items-center gap-2">
+            <Box className="flex flex-wrap items-center gap-2">
               <Button
                 variant="contained"
                 size="small"
@@ -208,9 +265,7 @@ export function RoomControlCard({
                   textTransform: "none",
                   bgcolor: "var(--primary)",
                   color: "var(--primary-foreground)",
-                  "&:hover": {
-                    bgcolor: "color-mix(in oklch, var(--primary) 92%, black)",
-                  },
+                  fontSize: { xs: 12, sm: 14 },
                 }}
               >
                 Turn ON
@@ -219,7 +274,12 @@ export function RoomControlCard({
                 variant="outlined"
                 size="small"
                 onClick={() => onLightControl(false)}
-                sx={{ textTransform: "none", borderColor: "var(--border)", color: "var(--foreground)" }}
+                sx={{
+                  textTransform: "none",
+                  borderColor: "var(--border)",
+                  color: "var(--foreground)",
+                  fontSize: { xs: 12, sm: 14 },
+                }}
               >
                 Turn OFF
               </Button>
@@ -227,11 +287,16 @@ export function RoomControlCard({
           </Box>
 
           {/* Footer */}
-          <Box className="col-span-2 flex items-center gap-1.5">
-            <AccessTimeRoundedIcon sx={{ fontSize: 18, color: "var(--muted-foreground)" }} />
+          <Box className="col-span-1 sm:col-span-2 flex items-center gap-1.5 flex-wrap">
+            <AccessTimeRoundedIcon
+              sx={{ fontSize: 18, color: "var(--muted-foreground)" }}
+            />
             <Typography
               variant="caption"
-              sx={{ color: "var(--muted-foreground)" }}
+              sx={{
+                color: "var(--muted-foreground)",
+                fontSize: { xs: 11, sm: 12 },
+              }}
               suppressHydrationWarning
             >
               Last updated: {lastUpdate || "—"}
