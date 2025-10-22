@@ -35,8 +35,12 @@ export function RoomControlCard({
         <Box className="flex items-start justify-between">
           <Box>
             <Typography sx={{ fontWeight: 600 }}>{roomName}</Typography>
-            <Typography variant="caption" sx={{ color: "#64748b" }}>
-              Updated: {lastUpdate}
+            <Typography
+              variant="caption"
+              sx={{ color: "#64748b" }}
+              suppressHydrationWarning
+            >
+              Updated: {lastUpdate || "—"}
             </Typography>
           </Box>
           <Box className="flex gap-2">

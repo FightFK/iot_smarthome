@@ -49,7 +49,7 @@ interface Room {
   humidity: number;
   motionDetected: boolean;
   lightOn: boolean;
-  lastUpdate: string;
+  lastUpdate: string;        // เวลาแสดงล่าสุด
   historyData: HistoryPoint[];
 }
 
@@ -60,13 +60,9 @@ interface MotionEvent {
 }
 
 export default function Page() {
-  const [currentPage, setCurrentPage] = useState<"dashboard" | "history">(
-    "dashboard"
-  );
+  const [currentPage, setCurrentPage] = useState<"dashboard" | "history">("dashboard");
   const [isConnected] = useState(true);
-  const [historyFilter, setHistoryFilter] = useState<"today" | "week" | "month">(
-    "today"
-  );
+  const [historyFilter, setHistoryFilter] = useState<"today" | "week" | "month">("today");
   const [addRoomDialogOpen, setAddRoomDialogOpen] = useState(false);
   const [editRoomDialogOpen, setEditRoomDialogOpen] = useState(false);
   const [deleteRoomDialogOpen, setDeleteRoomDialogOpen] = useState(false);
@@ -81,6 +77,7 @@ export default function Page() {
     setSnackOpen(true);
   };
 
+  // ✅ ไม่ใส่เวลาเริ่มต้นตอน SSR เพื่อเลี่ยง hydration mismatch
   const [rooms, setRooms] = useState<Room[]>([
     {
       id: 1,
@@ -89,7 +86,7 @@ export default function Page() {
       humidity: 55,
       motionDetected: true,
       lightOn: true,
-      lastUpdate: new Date().toLocaleTimeString(),
+      lastUpdate: "", // <— เว้นไว้ก่อน
       historyData: generateHistoricalData(24.5, 55),
     },
     {
@@ -99,7 +96,7 @@ export default function Page() {
       humidity: 62,
       motionDetected: false,
       lightOn: false,
-      lastUpdate: new Date().toLocaleTimeString(),
+      lastUpdate: "", // <— เว้นไว้ก่อน
       historyData: generateHistoricalData(26.2, 62),
     },
   ]);
@@ -110,39 +107,38 @@ export default function Page() {
     { id: 3, roomName: "Room 2", timestamp: "1 hour ago" },
   ]);
 
-  // Auto-refresh mock sensor data
+  // ✅ หลัง mount ค่อยตั้งค่าเวลาเริ่มต้น แล้วจึงเริ่ม interval
   useEffect(() => {
+    // ตั้งค่าเวลาเริ่มต้นให้ทุกห้อง
+    setRooms(prev =>
+      prev.map(r => ({ ...r, lastUpdate: new Date().toLocaleTimeString() }))
+    );
+
     const t = setInterval(() => {
-      setRooms((prev) =>
-        prev.map((room) => ({
+      setRooms(prev =>
+        prev.map(room => ({
           ...room,
-          temperature: parseFloat(
-            (room.temperature + (Math.random() - 0.5) * 0.5).toFixed(1)
-          ),
-          humidity: Math.max(
-            0,
-            Math.min(100, room.humidity + Math.round((Math.random() - 0.5) * 2))
-          ),
+          temperature: parseFloat((room.temperature + (Math.random() - 0.5) * 0.5).toFixed(1)),
+          humidity: Math.max(0, Math.min(100, room.humidity + Math.round((Math.random() - 0.5) * 2))),
           motionDetected: Math.random() > 0.85,
-          lastUpdate: new Date().toLocaleTimeString(),
+          lastUpdate: new Date().toLocaleTimeString(), // อัปเดตเวลาที่ฝั่ง client เท่านั้น
         }))
       );
     }, 5000);
+
     return () => clearInterval(t);
   }, []);
 
   const avgTemperature =
     rooms.length > 0
-      ? (rooms.reduce((s, r) => s + r.temperature, 0) / rooms.length).toFixed(
-          1
-        )
+      ? (rooms.reduce((s, r) => s + r.temperature, 0) / rooms.length).toFixed(1)
       : "0.0";
   const avgHumidity =
     rooms.length > 0
       ? Math.round(rooms.reduce((s, r) => s + r.humidity, 0) / rooms.length)
       : 0;
-  const lightsOn = rooms.filter((r) => r.lightOn).length;
-  const lastMotionRoom = rooms.find((r) => r.motionDetected);
+  const lightsOn = rooms.filter(r => r.lightOn).length;
+  const lastMotionRoom = rooms.find(r => r.motionDetected);
   const lastMotion = lastMotionRoom ? lastMotionRoom.name : "None";
 
   // Add room
@@ -156,11 +152,11 @@ export default function Page() {
       humidity: Math.round(baseHumidity),
       motionDetected: false,
       lightOn: false,
-      lastUpdate: new Date().toLocaleTimeString(),
+      lastUpdate: new Date().toLocaleTimeString(), // เหตุการณ์ฝั่ง client
       historyData: generateHistoricalData(baseTemp, baseHumidity),
     };
-    setRooms((prev) => [...prev, newRoom]);
-    setNextRoomId((p) => p + 1);
+    setRooms(prev => [...prev, newRoom]);
+    setNextRoomId(p => p + 1);
     openSnack(`${roomName} added successfully`);
   };
 
@@ -172,9 +168,9 @@ export default function Page() {
 
   const handleSaveEditRoom = (newName: string) => {
     if (selectedRoomId !== null) {
-      const oldName = rooms.find((r) => r.id === selectedRoomId)?.name;
-      setRooms((prev) =>
-        prev.map((r) => (r.id === selectedRoomId ? { ...r, name: newName } : r))
+      const oldName = rooms.find(r => r.id === selectedRoomId)?.name;
+      setRooms(prev =>
+        prev.map(r => (r.id === selectedRoomId ? { ...r, name: newName } : r))
       );
       openSnack(`Room renamed from "${oldName}" to "${newName}"`);
     }
@@ -188,9 +184,9 @@ export default function Page() {
 
   const handleConfirmDeleteRoom = () => {
     if (selectedRoomId !== null) {
-      const room = rooms.find((r) => r.id === selectedRoomId);
+      const room = rooms.find(r => r.id === selectedRoomId);
       if (room) {
-        setRooms((prev) => prev.filter((r) => r.id !== selectedRoomId));
+        setRooms(prev => prev.filter(r => r.id !== selectedRoomId));
         openSnack(`${room.name} removed from dashboard`);
       }
     }
@@ -198,8 +194,8 @@ export default function Page() {
 
   // Light control
   const handleLightControl = (roomId: number, isOn: boolean) => {
-    setRooms((prev) => prev.map((r) => (r.id === roomId ? { ...r, lightOn: isOn } : r)));
-    const room = rooms.find((r) => r.id === roomId);
+    setRooms(prev => prev.map(r => (r.id === roomId ? { ...r, lightOn: isOn } : r)));
+    const room = rooms.find(r => r.id === roomId);
     if (room) openSnack(`${room.name} light turned ${isOn ? "ON" : "OFF"}`);
   };
 
@@ -253,7 +249,7 @@ export default function Page() {
             <section>
               <h2 className="text-2xl mb-4">Room Monitoring & Control</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                {rooms.map((r) => (
+                {rooms.map(r => (
                   <RoomControlCard
                     key={r.id}
                     roomName={r.name}
@@ -295,14 +291,14 @@ export default function Page() {
         open={editRoomDialogOpen}
         onOpenChange={setEditRoomDialogOpen}
         onEditRoom={handleSaveEditRoom}
-        currentName={rooms.find((r) => r.id === selectedRoomId)?.name || ""}
+        currentName={rooms.find(r => r.id === selectedRoomId)?.name || ""}
       />
 
       <DeleteRoomDialog
         open={deleteRoomDialogOpen}
         onOpenChange={setDeleteRoomDialogOpen}
         onConfirmDelete={handleConfirmDeleteRoom}
-        roomName={rooms.find((r) => r.id === selectedRoomId)?.name || ""}
+        roomName={rooms.find(r => r.id === selectedRoomId)?.name || ""}
       />
 
       <Snackbar
