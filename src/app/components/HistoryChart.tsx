@@ -26,10 +26,27 @@ import {
 
 export type HistoryFilter = "today" | "week" | "month";
 
+type Room = {
+  id: number;
+  name: string;
+  temperature: number;
+  humidity: number;
+  motionDetected: boolean;
+  lightOn: boolean;
+  lastUpdate: string;
+  historyData: Array<{
+    timestamp: string;
+    temperature: number;
+    humidity: number;
+    motion: number;
+  }>;
+};
+
 export type HistoryChartProps = {
   selectedFilter: HistoryFilter;
   onFilterChange: (f: HistoryFilter) => void;
   hasEnoughRooms: boolean;
+  rooms: Room[];
 };
 
 const colors = {
@@ -44,38 +61,19 @@ const colors = {
   tooltipText: "var(--foreground)",
 };
 
-function makeData(roomIndex: number, filter: HistoryFilter) {
-  const ticks =
-    filter === "today"
-      ? ["09:00", "10:00", "11:00", "12:00", "13:00"]
-      : filter === "week"
-      ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-      : ["W1", "W2", "W3", "W4"];
-  const baseTemp = roomIndex === 0 ? 26 : 23;
-  const baseHum = roomIndex === 0 ? 68 : 52;
-  return ticks.map((t, i) => ({
-    time: t,
-    temperature: baseTemp + (roomIndex ? 0.6 : 0.4) * i,
-    humidity: baseHum - 1.2 * i,
-    motion:
-      filter === "today"
-        ? i === 1 || i === 4
-          ? 1
-          : 0
-        : i % 2,
-  }));
-}
-
 export function HistoryChart({
   selectedFilter,
   onFilterChange,
   hasEnoughRooms,
+  rooms,
 }: HistoryChartProps) {
-  const [roomTab, setRoomTab] = useState<"room1" | "room2">("room1");
-  const data = useMemo(
-    () => makeData(roomTab === "room1" ? 0 : 1, selectedFilter),
-    [roomTab, selectedFilter]
-  );
+  const [roomTab, setRoomTab] = useState(0);
+  
+  const data = useMemo(() => {
+    if (!rooms || rooms.length === 0) return [];
+    const selectedRoom = rooms[roomTab] || rooms[0];
+    return selectedRoom.historyData || [];
+  }, [rooms, roomTab]);
 
   return (
     <Card
@@ -111,14 +109,17 @@ export function HistoryChart({
           size="small"
           exclusive
           value={roomTab}
-          onChange={(_, v) => v && setRoomTab(v)}
+          onChange={(_, v) => v !== null && setRoomTab(v)}
           sx={{ mb: 2 }}
         >
-          <ToggleButton value="room1">Room 1</ToggleButton>
-          <ToggleButton value="room2">Room 2</ToggleButton>
+          {rooms.map((room, index) => (
+            <ToggleButton key={room.id} value={index}>
+              {room.name}
+            </ToggleButton>
+          ))}
         </ToggleButtonGroup>
 
-        {hasEnoughRooms ? (
+        {rooms.length > 0 && data.length > 0 ? (
           <Box sx={{ display: "grid", gap: 4 }}>
             <Box>
               <Typography variant="body2" sx={{ mb: 1, color: "var(--muted-foreground)" }}>
@@ -128,7 +129,7 @@ export function HistoryChart({
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data} margin={{ top: 10, right: 24, left: 0, bottom: 0 }}>
                     <CartesianGrid stroke={colors.grid} strokeDasharray="3 3" />
-                    <XAxis dataKey="time" stroke={colors.axis} />
+                    <XAxis dataKey="timestamp" stroke={colors.axis} />
                     <YAxis stroke={colors.axis} width={36} />
                     <Tooltip
                       contentStyle={{
@@ -162,7 +163,7 @@ export function HistoryChart({
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data} margin={{ top: 10, right: 24, left: 0, bottom: 0 }}>
                     <CartesianGrid stroke={colors.grid} strokeDasharray="3 3" />
-                    <XAxis dataKey="time" stroke={colors.axis} />
+                    <XAxis dataKey="timestamp" stroke={colors.axis} />
                     <YAxis stroke={colors.axis} width={36} />
                     <Tooltip
                       contentStyle={{
@@ -196,7 +197,7 @@ export function HistoryChart({
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={data} margin={{ top: 10, right: 24, left: 0, bottom: 0 }}>
                     <CartesianGrid stroke={colors.grid} strokeDasharray="3 3" />
-                    <XAxis dataKey="time" stroke={colors.axis} />
+                    <XAxis dataKey="timestamp" stroke={colors.axis} />
                     <YAxis stroke={colors.axis} domain={[0, 1]} ticks={[0, 1]} width={28} />
                     <Tooltip
                       contentStyle={{

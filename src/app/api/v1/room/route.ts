@@ -3,7 +3,7 @@ import { supabaseClient } from '@/libs/supabaseClient';
 
 export async function GET() {
     try {
-        const { data: Room, error } = await supabaseClient
+        const { data: roomData, error } = await supabaseClient
             .from('Room')
             .select('*');
 
@@ -13,9 +13,8 @@ export async function GET() {
                 { status: 500 }
             );
         }
-
         return NextResponse.json(
-            { data: Room },
+            roomData,
             { status: 200 }
         );
     } catch (err) {

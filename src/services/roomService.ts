@@ -2,7 +2,7 @@ import api from "@/libs/axios";
 
 export const getRooms = async () => {
   const res = await api.get("/room");
-  return res.data.data; 
+  return res.data; 
 };
 
 export const addRoom = async (roomName: string) => {
@@ -14,7 +14,7 @@ export const addRoom = async (roomName: string) => {
     room_id: nextId,
     room_name: roomName 
   });
-  return res.data.data;
+  return res.data.data; 
 };
 
 export const updateRoom = async (roomId: number, newName: string) => {
@@ -22,12 +22,12 @@ export const updateRoom = async (roomId: number, newName: string) => {
     room_id: roomId,
     room_name: newName 
   });
-  return res.data.data;
+  return res.data.data; 
 };
 
 export const deleteRoom = async (roomId: number) => {
   const res = await api.delete(`/room`, {
     data: { room_id: roomId }
   });
-  return res.data;
+  return res.data; 
 };

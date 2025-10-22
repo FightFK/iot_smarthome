@@ -21,6 +21,17 @@ import {
 import { getRoomTempHumidity } from "@/services/tempHumidityService";
 import { getRoomMotion } from "@/services/motionService";
 
+// ฟังก์ชันแปลงเวลาให้อ่านง่าย (dd/mm/yyyy hh:mm) - ไม่แปลง timezone
+const formatDateTime = (timestamp: string): string => {
+  // ใช้ string manipulation แทนการใช้ Date object เพื่อไม่ให้แปลง timezone
+  // Format จาก DB: "2025-10-22T23:10:53+00:00" หรือ "2025-10-22T23:10:53"
+  const dateStr = timestamp.replace('T', ' ').split('+')[0].split('.')[0]; // ตัดส่วน timezone และ milliseconds
+  const [date, time] = dateStr.split(' ');
+  const [year, month, day] = date.split('-');
+  const [hours, minutes] = time.split(':');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+};
+
 type HistoryPoint = {
   timestamp: string;
   temperature: number;
@@ -124,10 +135,7 @@ export default function Page() {
                     new Date(b.timestamp).getTime()
                 )
                 .map((t: any) => ({
-                  timestamp: new Date(t.timestamp).toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }),
+                  timestamp: formatDateTime(t.timestamp), // แปลงเวลาให้อ่านง่าย
                   temperature: t.temp,
                   humidity: t.humidity,
                   motion: motionData?.some(
@@ -149,9 +157,9 @@ export default function Page() {
                 humidity: latestTempHum?.humidity || 0,
                 motionDetected: !!latestMotion, // ถ้ามี motion record ล่าสุด
                 lightOn: false,
-                lastUpdate: latestTempHum?.timestamp
-                  ? new Date(latestTempHum.timestamp).toLocaleTimeString()
-                  : new Date().toLocaleTimeString(),
+                lastUpdate: latestTempHum?.timestamp 
+                  ? formatDateTime(latestTempHum.timestamp) 
+                  : formatDateTime(new Date().toISOString()), // แปลงเวลาให้อ่านง่าย
                 historyData,
               };
             } catch (err) {
@@ -166,7 +174,7 @@ export default function Page() {
                 humidity: 0,
                 motionDetected: false,
                 lightOn: false,
-                lastUpdate: new Date().toLocaleTimeString(),
+                lastUpdate: formatDateTime(new Date().toISOString()), // แปลงเวลาให้อ่านง่าย
                 historyData: [],
               };
             }
@@ -174,8 +182,6 @@ export default function Page() {
         );
 
         setRooms(roomsWithData);
-
-        // ✅ รวม motion ล่าสุดของทุกห้อง สำหรับ MotionAlertCard
         const allMotions = roomsWithData.flatMap((r) => ({
           id: r.id,
           roomName: r.name,
@@ -188,7 +194,7 @@ export default function Page() {
     };
 
     fetchRooms();
-    const interval = setInterval(fetchRooms, 5000);
+    const interval = setInterval(fetchRooms, 500000);
     return () => clearInterval(interval);
   }, []);
 
@@ -218,7 +224,7 @@ export default function Page() {
           humidity: 0,
           motionDetected: false,
           lightOn: false,
-          lastUpdate: new Date().toLocaleTimeString(),
+          lastUpdate: formatDateTime(new Date().toISOString()), // แปลงเวลาให้อ่านง่าย
           historyData: [],
         }))
       );
@@ -356,6 +362,7 @@ export default function Page() {
               selectedFilter: historyFilter,
               onFilterChange: setHistoryFilter,
               hasEnoughRooms: rooms.length >= 2,
+              rooms: rooms,
             })}
           </div>
         )}
