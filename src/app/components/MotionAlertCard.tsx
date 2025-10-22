@@ -18,17 +18,20 @@ export function MotionAlertCard({ recentMotions }: { recentMotions: MotionEvent[
     <Card
       elevation={0}
       sx={{
-        borderRadius: "16px",
-        border: "1px solid #fde7d9",
-        bgcolor: "#fff7ed",
-        boxShadow: "0 2px 12px rgba(249,115,22,.08)",
+        borderRadius: "calc(var(--radius) + 4px)",
+        border: "1px solid color-mix(in oklch, var(--destructive) 25%, var(--border))",
+        bgcolor: "color-mix(in oklch, var(--destructive) 8%, var(--card))",
       }}
     >
       <CardContent sx={{ pt: 2 }}>
         <Box className="flex items-center justify-between mb-2">
           <Box className="flex items-center gap-2">
-            <WarningAmberRoundedIcon sx={{ color: "#f97316" }} />
-            <Typography sx={{ fontWeight: 600, color: "#b45309" }}>
+            <WarningAmberRoundedIcon
+              sx={{ color: "color-mix(in oklch, var(--destructive) 70%, white)" }}
+            />
+            <Typography
+              sx={{ fontWeight: 600, color: "color-mix(in oklch, var(--destructive) 55%, white)" }}
+            >
               Motion Alert Center
             </Typography>
           </Box>
@@ -36,8 +39,9 @@ export function MotionAlertCard({ recentMotions }: { recentMotions: MotionEvent[
             label={`${recentMotions.length} Recent`}
             size="small"
             sx={{
-              color: "#ea580c",
-              borderColor: "#fdba74",
+              color: "var(--foreground)",
+              borderColor:
+                "color-mix(in oklch, var(--destructive) 40%, var(--border))",
               bgcolor: "transparent",
               border: "1px solid",
               height: 24,
@@ -52,19 +56,31 @@ export function MotionAlertCard({ recentMotions }: { recentMotions: MotionEvent[
             <ListItem
               key={m.id}
               sx={{
-                border: "1px solid #fde7d9",
-                bgcolor: "rgba(253,230,138,.15)",
-                borderRadius: "10px",
+                border:
+                  "1px solid color-mix(in oklch, var(--destructive) 18%, var(--border))",
+                bgcolor:
+                  "color-mix(in oklch, var(--destructive) 5%, var(--card))",
+                borderRadius: "calc(var(--radius) - 2px)",
                 mb: 1,
                 px: 1.5,
               }}
             >
-              <SsidChartRoundedIcon sx={{ color: "#fb923c", mr: 1 }} fontSize="small" />
+              <SsidChartRoundedIcon
+                sx={{
+                  color: "color-mix(in oklch, var(--destructive) 70%, white)",
+                  mr: 1,
+                }}
+                fontSize="small"
+              />
               <ListItemText
                 primary={m.roomName}
                 secondary={m.timestamp}
-                primaryTypographyProps={{ sx: { fontSize: 14, color: "#0f172a", fontWeight: 500 } }}
-                secondaryTypographyProps={{ sx: { fontSize: 12, color: "#64748b" } }}
+                primaryTypographyProps={{
+                  sx: { fontSize: 14, color: "var(--foreground)", fontWeight: 500 },
+                }}
+                secondaryTypographyProps={{
+                  sx: { fontSize: 12, color: "var(--muted-foreground)" },
+                }}
               />
             </ListItem>
           ))}

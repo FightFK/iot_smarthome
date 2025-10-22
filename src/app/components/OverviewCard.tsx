@@ -33,40 +33,41 @@ export function OverviewCard({
     <Card
       elevation={0}
       sx={{
-        borderRadius: "16px",
-        border: "1px solid #e5e7eb",
-        bgcolor: "rgba(255,255,255,.9)",
-        boxShadow: "0 2px 12px rgba(15,23,42,.04)",
+        borderRadius: "calc(var(--radius) + 4px)",
+        border: "1px solid var(--border)",
+        bgcolor: "var(--card)",
+        boxShadow: "0 8px 20px color-mix(in oklch, black 35%, transparent)",
       }}
     >
       <CardContent sx={{ py: 2.5 }}>
         <Box className="flex items-start justify-between">
           <Box>
-            <Typography variant="body2" sx={{ color: "#64748b" }}>
+            <Typography variant="body2" sx={{ color: "var(--muted-foreground)" }}>
               {title}
             </Typography>
-            <Typography sx={{ mt: 1, fontSize: 28, fontWeight: 700, color: "#0f172a" }}>
+            <Typography sx={{ mt: 1, fontSize: 28, fontWeight: 700, color: "var(--foreground)" }}>
               {value}
             </Typography>
             {subtitle && (
-              <Typography variant="caption" sx={{ color: "#94a3b8", display: "block", mt: 0.5 }}>
+              <Typography variant="caption" sx={{ color: "var(--muted-foreground)" }}>
                 {subtitle}
               </Typography>
             )}
           </Box>
 
-          {/* soft icon bubble */}
+          {/* ไอคอนในบับเบิล */}
           <Box
             className="grid place-items-center"
             sx={{
               width: 44,
               height: 44,
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #eff6ff, #ecfeff)",
-              border: "1px solid #e5e7eb",
+              borderRadius: "calc(var(--radius) - 2px)",
+              background: "var(--accent)",
+              border: "1px solid var(--border)",
             }}
           >
-            <IconComp sx={{ color: "#2563eb" }} />
+            {/* ใช้สีตาม foreground -> ขาวในดาร์ก, เข้มในไลท์ */}
+            <IconComp sx={{ color: "var(--foreground)" }} />
           </Box>
         </Box>
       </CardContent>
