@@ -5,7 +5,6 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
@@ -54,6 +53,7 @@ export function RoomControlCard({
         border: "1px solid var(--border)",
         bgcolor: "var(--card)",
         width: "100%",
+        maxWidth: 400,
         display: "flex",
         flexDirection: "column",
       }}
@@ -147,7 +147,7 @@ export function RoomControlCard({
 
         {/* Body */}
         <Box
-          className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm"
+          className="p-3 grid grid-cols-2 gap-3 text-sm"
           sx={{ flex: "1 1 auto" }}
         >
           {/* Temperature */}
@@ -156,17 +156,20 @@ export function RoomControlCard({
               border: "1px solid var(--border)",
               bgcolor: "var(--popover)",
               borderRadius: "var(--radius)",
-              p: { xs: 2, sm: 3 },
+              p: 2,
             }}
           >
             <Box className="flex items-center gap-1.5 mb-1">
               <ThermostatIcon
-                sx={{ color: "var(--foreground)" }}
-                fontSize="small"
+                sx={{ color: "var(--foreground)", fontSize: 18 }}
               />
               <Typography
                 variant="caption"
-                sx={{ color: "var(--muted-foreground)" }}
+                sx={{ 
+                  color: "var(--muted-foreground)",
+                  fontSize: 11,
+                  lineHeight: 1,
+                }}
               >
                 Temperature
               </Typography>
@@ -174,8 +177,9 @@ export function RoomControlCard({
             <Typography
               sx={{
                 fontWeight: 700,
-                fontSize: { xs: 18, sm: 22 },
+                fontSize: 20,
                 color: "var(--foreground)",
+                lineHeight: 1.2,
               }}
             >
               {temperature.toFixed(1)}°C
@@ -188,17 +192,20 @@ export function RoomControlCard({
               border: "1px solid var(--border)",
               bgcolor: "var(--popover)",
               borderRadius: "var(--radius)",
-              p: { xs: 2, sm: 3 },
+              p: 2,
             }}
           >
             <Box className="flex items-center gap-1.5 mb-1">
               <OpacityIcon
-                sx={{ color: "var(--foreground)" }}
-                fontSize="small"
+                sx={{ color: "var(--foreground)", fontSize: 18 }}
               />
               <Typography
                 variant="caption"
-                sx={{ color: "var(--muted-foreground)" }}
+                sx={{ 
+                  color: "var(--muted-foreground)",
+                  fontSize: 11,
+                  lineHeight: 1,
+                }}
               >
                 Humidity
               </Typography>
@@ -206,8 +213,9 @@ export function RoomControlCard({
             <Typography
               sx={{
                 fontWeight: 700,
-                fontSize: { xs: 18, sm: 22 },
+                fontSize: 20,
                 color: "var(--foreground)",
+                lineHeight: 1.2,
               }}
             >
               {humidity}%
@@ -216,7 +224,7 @@ export function RoomControlCard({
 
           {/* Motion */}
           <Box
-            className="col-span-1 sm:col-span-2"
+            className="col-span-2"
             sx={{
               border: "1px solid var(--border)",
               bgcolor: "var(--popover)",
@@ -249,45 +257,84 @@ export function RoomControlCard({
           </Box>
 
           {/* Controls */}
-          <Box className="col-span-1 sm:col-span-2">
-            <Typography
-              variant="body2"
-              sx={{ mb: 1, fontSize: { xs: 13, sm: 14 } }}
+          <Box 
+            className="col-span-2"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              border: "1px solid var(--border)",
+              bgcolor: "var(--popover)",
+              borderRadius: "var(--radius)",
+              px: 2.5,
+              py: 1.5,
+            }}
+          >
+            <Box className="flex items-center gap-2">
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: lightOn ? 'rgba(59, 130, 246, 0.1)' : 'var(--accent)',
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                <LightbulbRoundedIcon
+                  sx={{ 
+                    color: lightOn ? '#3b82f6' : 'var(--muted-foreground)',
+                    fontSize: 20,
+                    transition: 'all 0.3s ease',
+                  }}
+                />
+              </Box>
+              <Typography
+                sx={{ 
+                  fontSize: 14,
+                  color: 'var(--foreground)',
+                  fontWeight: 600,
+                }}
+              >
+                Light Control
+              </Typography>
+            </Box>
+            
+            <Box
+              onClick={() => onLightControl(!lightOn)}
+              sx={{
+                width: 48,
+                height: 26,
+                borderRadius: 999,
+                bgcolor: lightOn ? '#3b82f6' : '#cbd5e1',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  opacity: 0.8,
+                },
+              }}
             >
-              Light Control
-            </Typography>
-            <Box className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => onLightControl(true)}
+              <Box
                 sx={{
-                  textTransform: "none",
-                  bgcolor: "var(--primary)",
-                  color: "var(--primary-foreground)",
-                  fontSize: { xs: 12, sm: 14 },
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  bgcolor: 'white',
+                  position: 'absolute',
+                  top: 3,
+                  left: lightOn ? 25 : 3,
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                 }}
-              >
-                Turn ON
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => onLightControl(false)}
-                sx={{
-                  textTransform: "none",
-                  borderColor: "var(--border)",
-                  color: "var(--foreground)",
-                  fontSize: { xs: 12, sm: 14 },
-                }}
-              >
-                Turn OFF
-              </Button>
+              />
             </Box>
           </Box>
 
           {/* Footer */}
-          <Box className="col-span-1 sm:col-span-2 flex items-center gap-1.5 flex-wrap">
+          <Box className="col-span-2 flex items-center gap-1.5 flex-wrap">
             <AccessTimeRoundedIcon
               sx={{ fontSize: 18, color: "var(--muted-foreground)" }}
             />
