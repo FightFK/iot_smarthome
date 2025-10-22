@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { OverviewCard } from "./components/OverviewCard";
 import { MotionAlertCard } from "./components/MotionAlertCard";
@@ -272,11 +272,11 @@ export default function Page() {
 
         {currentPage === "history" && (
           <div className="space-y-8">
-            <HistoryChart
-              selectedFilter={historyFilter}
-              onFilterChange={setHistoryFilter}
-              hasEnoughRooms={rooms.length >= 2}
-            />
+            {React.createElement(HistoryChart as any, {
+              selectedFilter: historyFilter,
+              onFilterChange: setHistoryFilter,
+              hasEnoughRooms: rooms.length >= 2,
+            })}
           </div>
         )}
       </main>
