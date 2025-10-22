@@ -10,7 +10,6 @@ import SensorsIcon from "@mui/icons-material/Sensors";
 import LightModeIcon from "@mui/icons-material/LightMode";
 
 type IconKey = "thermostat" | "opacity" | "sensors" | "light";
-
 const IconMap: Record<IconKey, React.ElementType> = {
   thermostat: ThermostatIcon,
   opacity: OpacityIcon,
@@ -31,14 +30,22 @@ export function OverviewCard({
 }) {
   const IconComp = IconMap[icon];
   return (
-    <Card elevation={0} sx={{ borderRadius: "14px", border: "1px solid #e5e7eb" }}>
-      <CardContent>
+    <Card
+      elevation={0}
+      sx={{
+        borderRadius: "16px",
+        border: "1px solid #e5e7eb",
+        bgcolor: "rgba(255,255,255,.9)",
+        boxShadow: "0 2px 12px rgba(15,23,42,.04)",
+      }}
+    >
+      <CardContent sx={{ py: 2.5 }}>
         <Box className="flex items-start justify-between">
           <Box>
             <Typography variant="body2" sx={{ color: "#64748b" }}>
               {title}
             </Typography>
-            <Typography variant="h5" sx={{ mt: 1.2, fontWeight: 600 }}>
+            <Typography sx={{ mt: 1, fontSize: 28, fontWeight: 700, color: "#0f172a" }}>
               {value}
             </Typography>
             {subtitle && (
@@ -47,8 +54,19 @@ export function OverviewCard({
               </Typography>
             )}
           </Box>
-          <Box sx={{ p: 1, bgcolor: "#f1f5f9", borderRadius: "8px", lineHeight: 0 }}>
-            <IconComp fontSize="small" />
+
+          {/* soft icon bubble */}
+          <Box
+            className="grid place-items-center"
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: "12px",
+              background: "linear-gradient(135deg, #eff6ff, #ecfeff)",
+              border: "1px solid #e5e7eb",
+            }}
+          >
+            <IconComp sx={{ color: "#2563eb" }} />
           </Box>
         </Box>
       </CardContent>
