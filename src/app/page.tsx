@@ -73,6 +73,7 @@ interface Room {
   lightOn: boolean;
   lastUpdate: string;
   historyData: HistoryPoint[];
+  isControlling?: boolean;
 }
 
 interface MotionEvent {
@@ -85,7 +86,6 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState<"dashboard" | "history">(
     "dashboard"
   );
-  const [isConnected] = useState(true);
   const [historyFilter, setHistoryFilter] = useState<
     "today" | "week" | "month"
   >("today");
@@ -103,11 +103,13 @@ export default function Page() {
   };
 
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [recentMotions, setRecentMotions] = useState<MotionEvent[]>([]);
 
   useEffect(() => {
     const fetchRooms = async () => {
+      setIsLoading(true);
       try {
         const data = await getRooms(); // [{ room_id, room_name }, ...]
 
@@ -191,6 +193,8 @@ export default function Page() {
         setRecentMotions(allMotions);
       } catch (error) {
         console.error("❌ Failed to fetch rooms:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -277,17 +281,26 @@ export default function Page() {
   };
 
   const handleLightControl = async (roomId: number, isOn: boolean) => {
+    // เปิด loading
+    setRooms((prev) =>
+      prev.map((r) => (r.id === roomId ? { ...r, isControlling: true } : r))
+    );
+
     try {
       // ส่งคำสั่ง ON/OFF ไปที่ MQTT topic home/{roomId}/control
       await sendLightControl(roomId, isOn ? "ON" : "OFF");
       
       // อัพเดท UI
       setRooms((prev) =>
-        prev.map((r) => (r.id === roomId ? { ...r, lightOn: isOn } : r))
+        prev.map((r) => (r.id === roomId ? { ...r, lightOn: isOn, isControlling: false } : r))
       );
       const room = rooms.find((r) => r.id === roomId);
       if (room) openSnack(`${room.name} light turned ${isOn ? "ON" : "OFF"}`);
     } catch (error) {
+      // ปิด loading เมื่อเกิด error
+      setRooms((prev) =>
+        prev.map((r) => (r.id === roomId ? { ...r, isControlling: false } : r))
+      );
       openSnack("Failed to control light");
       console.error("Light control error:", error);
     }
@@ -298,11 +311,18 @@ export default function Page() {
       <DashboardHeader
         currentPage={currentPage}
         onNavigate={setCurrentPage}
-        isConnected={isConnected}
       />
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-8">
-        {currentPage === "dashboard" && (
+        {isLoading ? (
+          <div className="fixed inset-0 flex items-center justify-center bg-background z-50">
+            <img 
+              src="/Loading.gif" 
+              alt="Loading..." 
+              className="w-full h-full object-contain"
+            />
+          </div>
+        ) : currentPage === "dashboard" ? (
           <div className="space-y-8">
             <section>
               <h2 className="text-2xl mb-4">Home Overview</h2>
@@ -352,6 +372,7 @@ export default function Page() {
                     motionDetected={r.motionDetected}
                     lightOn={r.lightOn}
                     lastUpdate={r.lastUpdate}
+                    isControlling={r.isControlling}
                     onLightControl={(isOn: boolean) =>
                       handleLightControl(r.id, isOn)
                     }
@@ -364,9 +385,7 @@ export default function Page() {
               </div>
             </section>
           </div>
-        )}
-
-        {currentPage === "history" && (
+        ) : currentPage === "history" ? (
           <div className="space-y-8">
             {React.createElement(HistoryChart as any, {
               selectedFilter: historyFilter,
@@ -375,7 +394,7 @@ export default function Page() {
               rooms: rooms,
             })}
           </div>
-        )}
+        ) : null}
       </main>
 
       <AddRoomDialog

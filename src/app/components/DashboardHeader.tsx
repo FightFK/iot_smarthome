@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Button from "@mui/material/Button";
@@ -8,16 +9,32 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
-import WifiRoundedIcon from "@mui/icons-material/WifiRounded";
 import { ThemeToggle } from "./ThemeToggle";
 
 type Props = {
   currentPage: "dashboard" | "history";
   onNavigate: (p: "dashboard" | "history") => void;
-  isConnected: boolean;
 };
 
-export function DashboardHeader({ currentPage, onNavigate, isConnected }: Props) {
+export function DashboardHeader({ currentPage, onNavigate }: Props) {
+  const [mqttStatus, setMqttStatus] = useState(false);
+
+  useEffect(() => {
+    const checkMqttStatus = async () => {
+      try {
+        const response = await fetch('/api/v1/status');
+        const data = await response.json();
+        setMqttStatus(data.alive || false);
+      } catch (error) {
+        console.error('Failed to check MQTT status:', error);
+        setMqttStatus(false);
+      }
+    };
+
+    checkMqttStatus();
+    const interval = setInterval(checkMqttStatus, 10000); // เช็คทุก 10 วินาที
+    return () => clearInterval(interval);
+  }, []);
   const NavBtn = ({
     tab,
     icon,
@@ -89,21 +106,73 @@ export function DashboardHeader({ currentPage, onNavigate, isConnected }: Props)
           <NavBtn tab="dashboard" icon={<HomeRoundedIcon />} label="Dashboard" />
           <NavBtn tab="history" icon={<HistoryRoundedIcon />} label="History" />
 
-          <Chip
-            icon={<WifiRoundedIcon />}
-            label={isConnected ? "Connected" : "Disconnected"}
-            size="small"
+          <Box
             sx={{
               ml: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              px: 2,
+              py: 0.5,
               borderRadius: 999,
-              bgcolor: isConnected
-                ? "color-mix(in oklch, var(--secondary) 35%, var(--card))"
-                : "color-mix(in oklch, var(--muted) 55%, var(--card))",
-              color: "var(--foreground)",
-              border: "1px solid var(--border)",
+              bgcolor: mqttStatus
+                ? "rgba(34, 197, 94, 0.1)"
+                : "rgba(239, 68, 68, 0.1)",
+              border: `1px solid ${mqttStatus ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
             }}
-            variant="filled"
-          />
+          >
+            {/* สัญญาณ 3 ขีด แบบมีชีวิต */}
+            <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'flex-end' }}>
+              <Box
+                sx={{
+                  width: 3,
+                  height: 8,
+                  bgcolor: mqttStatus ? '#22c55e' : '#ef4444',
+                  borderRadius: 1,
+                  animation: mqttStatus ? 'pulse-bar 1.2s ease-in-out infinite' : 'none',
+                  '@keyframes pulse-bar': {
+                    '0%, 100%': { height: '8px', opacity: 0.4 },
+                    '50%': { height: '14px', opacity: 1 },
+                  },
+                }}
+              />
+              <Box
+                sx={{
+                  width: 3,
+                  height: 10,
+                  bgcolor: mqttStatus ? '#22c55e' : '#ef4444',
+                  borderRadius: 1,
+                  animation: mqttStatus ? 'pulse-bar 1.2s ease-in-out 0.2s infinite' : 'none',
+                  '@keyframes pulse-bar': {
+                    '0%, 100%': { height: '10px', opacity: 0.4 },
+                    '50%': { height: '16px', opacity: 1 },
+                  },
+                }}
+              />
+              <Box
+                sx={{
+                  width: 3,
+                  height: 12,
+                  bgcolor: mqttStatus ? '#22c55e' : '#ef4444',
+                  borderRadius: 1,
+                  animation: mqttStatus ? 'pulse-bar 1.2s ease-in-out 0.4s infinite' : 'none',
+                  '@keyframes pulse-bar': {
+                    '0%, 100%': { height: '12px', opacity: 0.4 },
+                    '50%': { height: '18px', opacity: 1 },
+                  },
+                }}
+              />
+            </Box>
+            <Typography
+              sx={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: mqttStatus ? '#22c55e' : '#ef4444',
+              }}
+            >
+              {mqttStatus ? 'Connected' : 'Disconnected'}
+            </Typography>
+          </Box>
 
           <ThemeToggle />
         </Box>

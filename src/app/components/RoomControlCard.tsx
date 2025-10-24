@@ -9,6 +9,7 @@ import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import CircularProgress from "@mui/material/CircularProgress";
 import LightbulbRoundedIcon from "@mui/icons-material/LightbulbRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import ThermostatIcon from "@mui/icons-material/Thermostat";
@@ -27,6 +28,7 @@ export function RoomControlCard({
   onEdit,
   onDelete,
   canDelete,
+  isControlling,
 }: {
   roomName: string;
   temperature: number;
@@ -38,6 +40,7 @@ export function RoomControlCard({
   onEdit: () => void;
   onDelete: () => void;
   canDelete?: boolean;
+  isControlling?: boolean;
 }) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
@@ -303,33 +306,50 @@ export function RoomControlCard({
             </Box>
             
             <Box
-              onClick={() => onLightControl(!lightOn)}
+              onClick={() => !isControlling && onLightControl(!lightOn)}
               sx={{
                 width: 48,
                 height: 26,
                 borderRadius: 999,
                 bgcolor: lightOn ? '#3b82f6' : '#cbd5e1',
                 position: 'relative',
-                cursor: 'pointer',
+                cursor: isControlling ? 'not-allowed' : 'pointer',
                 transition: 'all 0.3s ease',
+                opacity: isControlling ? 0.6 : 1,
                 '&:hover': {
-                  opacity: 0.8,
+                  opacity: isControlling ? 0.6 : 0.8,
                 },
               }}
             >
-              <Box
-                sx={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  bgcolor: 'white',
-                  position: 'absolute',
-                  top: 3,
-                  left: lightOn ? 25 : 3,
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                }}
-              />
+              {isControlling ? (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                >
+                  <CircularProgress 
+                    size={14} 
+                    sx={{ color: 'white' }}
+                  />
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: 'white',
+                    position: 'absolute',
+                    top: 3,
+                    left: lightOn ? 25 : 3,
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                  }}
+                />
+              )}
             </Box>
           </Box>
 
