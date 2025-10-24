@@ -10,6 +10,7 @@ import { AddRoomDialog } from "./components/AddRoomDialog";
 import { EditRoomDialog } from "./components/EditRoomDialog";
 import { DeleteRoomDialog } from "./components/DeleteRoomDialog";
 import { HistoryChart } from "./components/HistoryChart";
+import { Footer } from "./components/Footer";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import {
@@ -432,6 +433,8 @@ export default function Page() {
           {snackMsg}
         </Alert>
       </Snackbar>
+
+      <Footer />
     </div>
   );
 }
