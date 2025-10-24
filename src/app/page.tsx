@@ -20,6 +20,7 @@ import {
 } from "@/services/roomService";
 import { getRoomTempHumidity } from "@/services/tempHumidityService";
 import { getRoomMotion } from "@/services/motionService";
+import { sendLightControl } from "@/services/controlService";
 
 // ฟังก์ชันแปลงเวลาให้อ่านง่าย (dd/mm/yyyy hh:mm) - ไม่แปลง timezone
 const formatDateTime = (timestamp: string): string => {
@@ -275,12 +276,21 @@ export default function Page() {
     }
   };
 
-  const handleLightControl = (roomId: number, isOn: boolean) => {
-    setRooms((prev) =>
-      prev.map((r) => (r.id === roomId ? { ...r, lightOn: isOn } : r))
-    );
-    const room = rooms.find((r) => r.id === roomId);
-    if (room) openSnack(`${room.name} light turned ${isOn ? "ON" : "OFF"}`);
+  const handleLightControl = async (roomId: number, isOn: boolean) => {
+    try {
+      // ส่งคำสั่ง ON/OFF ไปที่ MQTT topic home/{roomId}/control
+      await sendLightControl(roomId, isOn ? "ON" : "OFF");
+      
+      // อัพเดท UI
+      setRooms((prev) =>
+        prev.map((r) => (r.id === roomId ? { ...r, lightOn: isOn } : r))
+      );
+      const room = rooms.find((r) => r.id === roomId);
+      if (room) openSnack(`${room.name} light turned ${isOn ? "ON" : "OFF"}`);
+    } catch (error) {
+      openSnack("Failed to control light");
+      console.error("Light control error:", error);
+    }
   };
 
   return (
