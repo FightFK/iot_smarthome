@@ -14,14 +14,14 @@ const char* password = "COMsci@105";
 
 // ====== PSU Portal Login ======
 const char* loginURL = "https://cp-xml-40g.psu.ac.th:6082/php/action_page.php";
-const char* portal_user = "";   
-const char* portal_pass = "";   
+const char* portal_user = "6510210073";   
+const char* portal_pass = "rakmai31654_";   
 
 // ====== MQTT Server ======
 const char* mqtt_server = "47.250.152.169";
 const int mqtt_port = 1883;
-const char* mqtt_user = "";
-const char* mqtt_pass = "";
+const char* mqtt_user = "chinnapong";
+const char* mqtt_pass = "cs105lab";
 
 // ====== Room ID ======
 const char* roomID = "room2";

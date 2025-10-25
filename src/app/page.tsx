@@ -22,6 +22,7 @@ import {
 import { getRoomTempHumidity } from "@/services/tempHumidityService";
 import { getRoomMotion } from "@/services/motionService";
 import { sendLightControl } from "@/services/controlService";
+import { useRealtimeData } from "@/hooks/useRealtimeData";
 
 // ฟังก์ชันแปลงเวลาให้อ่านง่าย (dd/mm/yyyy hh:mm) - ไม่แปลง timezone
 const formatDateTime = (timestamp: string): string => {
@@ -87,9 +88,6 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState<"dashboard" | "history">(
     "dashboard"
   );
-  const [historyFilter, setHistoryFilter] = useState<
-    "today" | "week" | "month"
-  >("today");
   const [addRoomDialogOpen, setAddRoomDialogOpen] = useState(false);
   const [editRoomDialogOpen, setEditRoomDialogOpen] = useState(false);
   const [deleteRoomDialogOpen, setDeleteRoomDialogOpen] = useState(false);
@@ -107,6 +105,28 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [recentMotions, setRecentMotions] = useState<MotionEvent[]>([]);
+
+  // เชื่อมต่อ WebSocket สำหรับข้อมูล real-time
+  const { realtimeData, isConnected, getLatestSensorData, hasMotion, latestMotion } = useRealtimeData(
+    typeof window !== "undefined" && process.env.NODE_ENV === "production"
+      ? "ws://yourdomain.com:8080"
+      : "ws://localhost:8080"
+  );
+
+  // ตรวจจับ Motion ใหม่และแสดง Snackbar
+  useEffect(() => {
+    if (latestMotion) {
+      openSnack(`🚶 Motion detected in ${latestMotion.roomName}`);
+
+      // อัพเดทรายการ Motion แบบ real-time (ไม่ต้อง refresh)
+      const newMotion: MotionEvent = {
+        id: Date.now(), // ใช้ timestamp เป็น temp ID
+        roomName: latestMotion.roomName,
+        timestamp: latestMotion.timestamp,
+      };
+      setRecentMotions((prev) => [newMotion, ...prev].slice(0, 10)); // เก็บแค่ 10 รายการล่าสุด
+    }
+  }, [latestMotion]);
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -200,20 +220,71 @@ export default function Page() {
     };
 
     fetchRooms();
-    const interval = setInterval(fetchRooms, 500000);
-    return () => clearInterval(interval);
+    // ไม่ต้อง polling เพราะใช้ WebSocket แล้ว
   }, []);
 
-  const avgTemperature =
-    rooms.length > 0
-      ? (rooms.reduce((s, r) => s + r.temperature, 0) / rooms.length).toFixed(1)
-      : "0.0";
-  const avgHumidity =
-    rooms.length > 0
-      ? Math.round(rooms.reduce((s, r) => s + r.humidity, 0) / rooms.length)
-      : 0;
+  // ฟังก์ชันดึงข้อมูลที่จะแสดง (ลองจาก real-time ก่อน ถ้าไม่มีใช้จาก DB)
+  const getDisplayData = (roomId: number) => {
+    // ลองดึงจาก realtime data ก่อน
+    const realtimeSensor = getLatestSensorData(roomId);
+    if (realtimeSensor) {
+      return {
+        temp: realtimeSensor.temp,
+        humidity: realtimeSensor.humidity,
+        timestamp: formatDateTime(realtimeSensor.timestamp),
+        motionDetected: hasMotion(roomId),
+      };
+    }
+
+    // ถ้าไม่มี ใช้ข้อมูลจาก DB
+    const room = rooms.find((r) => r.id === roomId);
+    if (room) {
+      return {
+        temp: room.temperature,
+        humidity: room.humidity,
+        timestamp: room.lastUpdate,
+        motionDetected: room.motionDetected,
+      };
+    }
+
+    return null;
+  };
+
+  // คำนวณค่าเฉลี่ยจากข้อมูล real-time
+  const avgTemperature = (() => {
+    if (rooms.length === 0) return "0.0";
+    let sum = 0;
+    let count = 0;
+    rooms.forEach((r) => {
+      const data = getDisplayData(r.id);
+      if (data) {
+        sum += data.temp;
+        count++;
+      }
+    });
+    return count > 0 ? (sum / count).toFixed(1) : "0.0";
+  })();
+
+  const avgHumidity = (() => {
+    if (rooms.length === 0) return 0;
+    let sum = 0;
+    let count = 0;
+    rooms.forEach((r) => {
+      const data = getDisplayData(r.id);
+      if (data) {
+        sum += data.humidity;
+        count++;
+      }
+    });
+    return count > 0 ? Math.round(sum / count) : 0;
+  })();
+
   const lightsOn = rooms.filter((r) => r.lightOn).length;
-  const lastMotionRoom = rooms.find((r) => r.motionDetected);
+  
+  const lastMotionRoom = rooms.find((r) => {
+    const data = getDisplayData(r.id);
+    return data?.motionDetected;
+  });
   const lastMotion = lastMotionRoom ? lastMotionRoom.name : "None";
 
   const handleAddRoom = async (roomName: string) => {
@@ -315,6 +386,13 @@ export default function Page() {
       />
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-8">
+        {/* แสดงสถานะการเชื่อมต่อ WebSocket */}
+        {!isConnected && !isLoading && (
+          <div className="bg-yellow-500 text-white text-center py-2 mb-4 rounded">
+            ⚠️ กำลังเชื่อมต่อระบบ real-time...
+          </div>
+        )}
+
         {isLoading ? (
           <div className="fixed inset-0 flex items-center justify-center bg-background z-50">
             <img 
@@ -364,36 +442,34 @@ export default function Page() {
             <section>
               <h2 className="text-2xl mb-4">Room Monitoring & Control</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                {rooms.map((r) => (
-                  <RoomControlCard
-                    key={r.id}
-                    roomName={r.name}
-                    temperature={r.temperature}
-                    humidity={r.humidity}
-                    motionDetected={r.motionDetected}
-                    lightOn={r.lightOn}
-                    lastUpdate={r.lastUpdate}
-                    isControlling={r.isControlling}
-                    onLightControl={(isOn: boolean) =>
-                      handleLightControl(r.id, isOn)
-                    }
-                    onEdit={() => handleEditRoom(r.id)}
-                    onDelete={() => handleDeleteRoom(r.id)}
-                    canDelete={rooms.length > 1}
-                  />
-                ))}
+                {rooms.map((r) => {
+                  const displayData = getDisplayData(r.id);
+                  return (
+                    <RoomControlCard
+                      key={r.id}
+                      roomName={r.name}
+                      temperature={displayData?.temp || r.temperature}
+                      humidity={displayData?.humidity || r.humidity}
+                      motionDetected={displayData?.motionDetected || r.motionDetected}
+                      lightOn={r.lightOn}
+                      lastUpdate={displayData?.timestamp || r.lastUpdate}
+                      isControlling={r.isControlling}
+                      onLightControl={(isOn: boolean) =>
+                        handleLightControl(r.id, isOn)
+                      }
+                      onEdit={() => handleEditRoom(r.id)}
+                      onDelete={() => handleDeleteRoom(r.id)}
+                      canDelete={rooms.length > 1}
+                    />
+                  );
+                })}
                 <AddRoomCard onAddRoom={() => setAddRoomDialogOpen(true)} />
               </div>
             </section>
           </div>
         ) : currentPage === "history" ? (
           <div className="space-y-8">
-            {React.createElement(HistoryChart as any, {
-              selectedFilter: historyFilter,
-              onFilterChange: setHistoryFilter,
-              hasEnoughRooms: rooms.length >= 2,
-              rooms: rooms,
-            })}
+            <HistoryChart />
           </div>
         ) : null}
       </main>
