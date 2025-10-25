@@ -94,7 +94,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void reconnectMQTT() {
   while (!client.connected()) {
     Serial.print("Connecting to MQTT...");
-    if (client.connect("ESP32Client", mqtt_user, mqtt_pass)) {
+    String clientId = String("ESP32Client-") + roomID;
+    if (client.connect(clientId.c_str(), mqtt_user, mqtt_pass)) { 
+
       Serial.println("✅ Connected!");
       client.subscribe(topic_control.c_str());
       Serial.printf("Subscribed: %s\n", topic_control.c_str());
