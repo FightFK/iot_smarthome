@@ -24,7 +24,7 @@ const char* mqtt_user = "chinnapong";
 const char* mqtt_pass = "cs105lab";
 
 // ====== Room ID ======
-const char* roomID = "room2";
+const char* roomID = "room1";
 
 // ====== Dynamic Topics ======
 String topic_data;

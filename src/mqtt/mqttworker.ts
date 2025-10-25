@@ -73,7 +73,6 @@ function startMqttWorker() {
           await supabaseServer.from("Temp_Humidity").insert(bufferTempHum);
           bufferTempHum = [];
         }
-        // Motion ไม่ใช้ buffer แล้ว - บันทึกทันทีเมื่อมีคนเดินผ่าน
       } catch (err) {
         console.error("❌ Error during batch insert:", err);
       }

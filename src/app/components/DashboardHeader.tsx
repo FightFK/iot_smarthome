@@ -9,11 +9,12 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
+import AssessmentRoundedIcon from "@mui/icons-material/AssessmentRounded";
 import { ThemeToggle } from "./ThemeToggle";
-
+import Link from "next/link";
 type Props = {
-  currentPage: "dashboard" | "history";
-  onNavigate: (p: "dashboard" | "history") => void;
+  currentPage: "dashboard" | "history" | "status";
+  onNavigate: (p: "dashboard" | "history" | "status") => void;
 };
 
 export function DashboardHeader({ currentPage, onNavigate }: Props) {
@@ -40,7 +41,7 @@ export function DashboardHeader({ currentPage, onNavigate }: Props) {
     icon,
     label,
   }: {
-    tab: "dashboard" | "history";
+    tab: "dashboard" | "history" | "status";
     icon: React.ReactNode;
     label: string;
   }) => (
@@ -105,7 +106,7 @@ export function DashboardHeader({ currentPage, onNavigate }: Props) {
         <Box className="flex items-center gap-2">
           <NavBtn tab="dashboard" icon={<HomeRoundedIcon />} label="Dashboard" />
           <NavBtn tab="history" icon={<HistoryRoundedIcon />} label="History" />
-
+          <NavBtn tab="status" icon={<AssessmentRoundedIcon />} label="Status" />
           <Box
             sx={{
               ml: 1,

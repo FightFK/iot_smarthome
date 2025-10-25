@@ -23,7 +23,8 @@ import { getRoomTempHumidity } from "@/services/tempHumidityService";
 import { getRoomMotion } from "@/services/motionService";
 import { sendLightControl } from "@/services/controlService";
 import { useRealtimeData } from "@/hooks/useRealtimeData";
-
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 // ฟังก์ชันแปลงเวลาให้อ่านง่าย (dd/mm/yyyy hh:mm) - ไม่แปลง timezone
 const formatDateTime = (timestamp: string): string => {
   // ใช้ string manipulation แทนการใช้ Date object เพื่อไม่ให้แปลง timezone
@@ -85,7 +86,8 @@ interface MotionEvent {
 }
 
 export default function Page() {
-  const [currentPage, setCurrentPage] = useState<"dashboard" | "history">(
+  const router = useRouter();
+  const [currentPage, setCurrentPage] = useState<"dashboard" | "history" | "status">(
     "dashboard"
   );
   const [addRoomDialogOpen, setAddRoomDialogOpen] = useState(false);
@@ -382,7 +384,13 @@ export default function Page() {
     <div className="min-h-screen bg-background">
       <DashboardHeader
         currentPage={currentPage}
-        onNavigate={setCurrentPage}
+        onNavigate={(page) => {
+          if (page === "status") {
+            router.push("/status");
+          } else {
+            setCurrentPage(page);
+          }
+        }}
       />
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-8">
@@ -435,9 +443,9 @@ export default function Page() {
               </div>
             </section>
 
-            <section>
+            {/* <section>
               <MotionAlertCard recentMotions={recentMotions} />
-            </section>
+            </section> */}
 
             <section>
               <h2 className="text-2xl mb-4">Room Monitoring & Control</h2>
