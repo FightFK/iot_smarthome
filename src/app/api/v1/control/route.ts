@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
     // Publish command
     await new Promise<void>((resolve, reject) => {
       client.on("connect", () => {
-        const topic = `home/${roomId}/control`;
+        const topic = `home/room${roomId}/control`;
+        console.log(`🔌 Connected to MQTT broker, publishing to ${topic}...`);
         client.publish(topic, command, { qos: 1 }, (err) => {
           if (err) {
             console.error("❌ MQTT Publish error:", err);
